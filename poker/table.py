@@ -15,10 +15,10 @@ class Table:
         self.max_bet: int = 0
         self.raise_player_num = None
 
-    def generate_cards(self):
+    def generate_cards(self) -> None:
+        """Генерирует карты"""
         cards = []
         num_cards = 5 + self.num_players * 2
-        # Генерация достоинств и мастей карт
         for _ in range(num_cards):
             while True:
                 new_card = [randint(2, 14), randint(1, 4)]
@@ -31,7 +31,7 @@ class Table:
             self.cards_pool.append(Card(cards[i][0], cards[i][1]))
 
     @property
-    def private_cards(self):
+    def private_cards(self) -> List[List[Card]]:
         cards = []
         count = 5
         for _ in range(self.num_players):
@@ -42,11 +42,12 @@ class Table:
 
     @property
     def community_cards(self) -> List[Card]:
-        # Возвращает первые пять из пула карт
         cards = []
         for i in range(5):
             cards.append(self.cards_pool[i])
         return cards
 
-    def reset(self):
+    def reset(self) -> None:
+        """Очищает переменные"""
         self.cards_pool = []
+        self.dealt_community_cards = []

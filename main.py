@@ -20,29 +20,29 @@ def run_poker(num_players, initial_chips, big_blind):
 
         table.rounds += 1
         table.generate_cards()
-        cli.get_rounds_number()
+        cli.print_rounds_number()
         engine.assign_blinds()
 
         # Префлоп
         engine.deal_private_cards()
-        engine.place_forced_bet()
-        engine.betting_round(interface=cli)
+        engine.place_forced_bets()
+        engine.betting_round(is_preflop=True, interface=cli)
 
         # Флоп
         engine.deal_flop_cards()
-        engine.betting_round(interface=cli)
+        engine.betting_round(is_preflop=False,interface=cli)
 
         # Терн
         engine.deal_turn_cards()
-        engine.betting_round(interface=cli)
+        engine.betting_round(is_preflop=False,interface=cli)
 
         # Ривер
         engine.deal_river_cards()
-        engine.betting_round(interface=cli)
+        engine.betting_round(is_preflop=False,interface=cli)
 
         # Конец игры
         winners = engine.compute_winners()
-        cli.get_end_round_info(winners)
+        cli.print_end_round(winners)
         engine.reset()
 
 if __name__ == '__main__':

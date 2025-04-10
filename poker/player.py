@@ -16,7 +16,8 @@ class Player:
         self.is_big_blind: bool = False
         self.is_fold: bool = False
 
-    def place_bet(self, bet_chips: int):
+    def place_bet(self, bet_chips: int) -> None:
+        """Делает ставку"""
         self.chips -= bet_chips
         self.bet += bet_chips
 

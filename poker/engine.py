@@ -13,71 +13,58 @@ class GameEngine:
         self.big_blind = big_blind
         self.big_blind_num: int = 0
 
-    def assign_random_blinds(self):
+    def assign_random_blinds(self) -> None:
+        """Случайно раставляет блайнды в начале игры"""
         self.big_blind_num = random.randint(0, len(self.players) - 1)
         self.players[self.big_blind_num].is_big_blind = True
         self.players[self.big_blind_num - 1].is_small_blind = True
 
-    def move_blinds(self):
+    def move_blinds(self) -> None:
+        """Передвигает блайндов после каждого раунда"""
         self.players[self.big_blind_num].is_big_blind = False
-        self.players[self.big_blind_num].is_small_blind = True
-
+        self.players[self.big_blind_num].is_small_blind = True # ББ становиться МБ
         self.players[self.big_blind_num - 1].is_small_blind = False
 
+        # Назначение нового ББ
         self.big_blind_num += 1
         if self.big_blind_num >= len(self.players):
             self.big_blind_num = 0
         self.players[self.big_blind_num].is_big_blind = True
 
-    def assign_blinds(self):
+    def assign_blinds(self) -> None:
+        """Растаноляет блайндов"""
         if self.table.rounds == 1:
             self.assign_random_blinds()
         else:
             self.move_blinds()
 
-    def players_move_orders(self, is_preflop: bool) -> List[int]:
-        players_move_orders = []
-
-        for i in range(len(self.players)):
-            num = self.big_blind_num
-
-            if is_preflop:
-                num += i + 1
-            else:
-                if len(self.players) > 2:
-                    num += i - 1
-                else:
-                    num += i
-
-            if num >= len(self.players):
-                num -= len(self.players)
-
-            if self.players[num].chips > 0:
-                players_move_orders.append(num)
-
-        return players_move_orders
-
-    def deal_private_cards(self):
+    def deal_private_cards(self) -> None:
+        """Раздает карты игрокам"""
         for i in range(len(self.players)):
             self.players[i].cards = self.table.private_cards[i]
 
-    def deal_flop_cards(self):
+    def deal_flop_cards(self) -> None:
+        """Раздает карты в флопе"""
         for i in range(3):
             self.table.dealt_community_cards.append(self.table.community_cards[i])
 
-    def deal_turn_cards(self):
+    def deal_turn_cards(self) -> None:
+        """Раздает карты в тёрне"""
         self.table.dealt_community_cards.append(self.table.community_cards[3])
 
-    def deal_river_cards(self):
+    def deal_river_cards(self) -> None:
+        """Раздает карты в ривере"""
         self.table.dealt_community_cards.append(self.table.community_cards[4])
 
-    def place_forced_bet(self):
+    def place_forced_bets(self) -> None:
+        """Делает обязательные ставки"""
         for player in self.players:
             if player.is_big_blind: player.place_bet(self.big_blind)
             if player.is_small_blind: player.place_bet(self.big_blind // 2)
         self.table.max_bet = self.big_blind
 
-    def perform_player_action(self, player_num: int):
+    def perform_player_action(self, player_num: int) -> None:
+        """Выполняет действие игрока"""
         player = self.players[player_num]
 
         if player.action == 'Fold':
@@ -93,31 +80,70 @@ class GameEngine:
             player.place_bet(player.raise_chips - player.bet)
             self.table.raise_player_num = player_num
 
-    def betting_round(self, interface):
+    def players_move_orders(self, is_preflop: bool) -> List[int]:
+        """
+        Возвращает порядок ходов игроков во время торга. Первым ходит - первый в списке
+        :param is_preflop: Это префлоп?
+        :return: Список порядка ходов
+        """
+        players_move_orders = []
+
+        for i in range(len(self.players)):
+            num = self.big_blind_num
+
+            if is_preflop:
+                num += i + 1 # В префлопе первым ходит следущий за ББ
+            else:
+                if len(self.players) == 2:
+                    num += i # Если два игрока, после префлопа первым ходит ББ
+                else:
+                    num += i - 1 # Если больше двух, то МБ
+
+            # При выходе за кол-во игроков, возвращает в начало списка
+            if num >= len(self.players):
+                num -= len(self.players)
+
+            # Игроки без фишек не участвуют в торгах
+            if self.players[num].chips > 0:
+                players_move_orders.append(num)
+
+        return players_move_orders
+
+    def betting_round(self, is_preflop: bool, interface: object) -> None:
+        """
+        Рассчитывает раунды торгов
+        :param is_preflop: Это префлоп?
+        :param interface: Экземпляр класса интерфейса
+        """
         players_with_chips = [player for player in self.players if player.chips != 0]
+
         if len(players_with_chips) > 1:
             while True:
-                for player_num in self.players_move_orders(is_preflop=True):
+                for player_num in self.players_move_orders(is_preflop):
                     if player_num == self.table.raise_player_num:
                         self.table.raise_player_num = None
                         break
-                    interface.get_betting_round_info(player_num)
+                    interface.print_betting_round(player_num)
                     interface.get_action(player_num)
                     self.perform_player_action(player_num)
-
                 if self.table.raise_player_num is None:
                     break
 
+            # Очищает переменные после торгов
             for player in self.players:
                 self.table.pot += player.bet
                 player.bet = 0
                 player.action = ''
                 player.raise_chips = 0
-
             self.table.raise_player_num = None
             self.table.max_bet = 0
 
-    def find_best_hand(self, player: Player):
+    def find_best_hand(self, player: Player) -> (int, int):
+        """
+        Ищет лучшую руку у игрока
+        :param player: Игрок
+        :return: Номер руки, сила руки
+        """
         cards = self.table.community_cards + player.cards
         all_hands = {1: [player.kicker]}
         ranks = [card.rank for card in cards]
@@ -188,7 +214,10 @@ class GameEngine:
         return max_hand, all_hands[max_hand]
 
     def compute_winners(self) -> List[int]:
-        """Вычисление победителя"""
+        """
+        Вычисление победителя/победителей
+        :return: победитель/победители
+        """
         players = [player for player in self.players if not player.is_fold]
         winners = []
         best_hand_in_game = 0
@@ -228,12 +257,12 @@ class GameEngine:
 
         return winners
 
-    def reset(self):
+    def reset(self) -> None:
+        """Очищает переменные"""
         for player in self.players:
             player.cards = []
             player.best_hand = 0
             player.best_hand_score = []
             player.is_fold = False
 
-        self.table.cards_pool = []
-        self.table.dealt_community_cards = []
+        self.table.reset()

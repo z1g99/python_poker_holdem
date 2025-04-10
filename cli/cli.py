@@ -11,17 +11,19 @@ class CLI:
         self.table = table
         self.big_blind = big_blind
 
-    def get_rounds_number(self):
+    def print_rounds_number(self) -> None:
+        """Выводит кол-во раундов"""
         print(f'Round: {self.table.rounds}')
 
-    def get_role(self, player_num):
+    def get_role(self, player_num) -> str:
+        """Возвращает роль игрока"""
         if self.players[player_num].is_big_blind:
             return ' (BB)'
         if self.players[player_num].is_small_blind:
             return ' (SB)'
         return ''
 
-    def get_action(self, player_num):
+    def get_action(self, player_num) -> None:
         player = self.players[player_num]
 
         while True:
@@ -50,7 +52,8 @@ class CLI:
                 print('Incorrect value')
 
 
-    def get_betting_round_info(self, player_num):
+    def print_betting_round(self, player_num) -> None:
+        """Выводит информацию о раунде торговле"""
         table_cards = [card.get_card() for card in self.table.dealt_community_cards]
 
         print('-' * 30)
@@ -70,7 +73,8 @@ class CLI:
         print(f'[{player.cards[0].get_card()} {player.cards[1].get_card()}]')
         print('-' * 30)
 
-    def get_end_round_info(self, winners):
+    def print_end_round(self, winners) -> None:
+        """Выводит информацию о конце раунда"""
         if len(winners) == 1:
             print(f'Round winner: Player{winners[0]}')
         else:

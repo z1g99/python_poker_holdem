@@ -3,7 +3,7 @@ class Card:
         self.rank = rank # int [2; 14]
         self.suit = suit # int [1; 4]
 
-    def get_card(self):
+    def get_card(self) -> str:
         rank_char =  {
             2: '2',
             3: '3',
